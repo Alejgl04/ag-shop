@@ -57,15 +57,23 @@ export class ProductsService {
         .getOne();
     }
 
-    if (!product)
-      throw new NotFoundException(
-        `Product with search term: ${term} not found`,
-      );
+    if (!product) this.handleNotFoundException(term);
     return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    const product = await this.productRepository.preload({
+      id,
+      ...updateProductDto,
+    });
+    if (!product) this.handleNotFoundException(id);
+
+    try {
+      await this.productRepository.save(product);
+      return product;
+    } catch (error) {
+      this.handleExceptions(error);
+    }
   }
 
   async remove(id: string) {
@@ -78,5 +86,10 @@ export class ProductsService {
 
     this.logger.error(error);
     throw new InternalServerErrorException(`Something went wrong: ${error}`);
+  }
+
+  private handleNotFoundException(productId: any) {
+    this.logger.error(productId);
+    throw new NotFoundException(`Product with ${productId} not found`);
   }
 }
