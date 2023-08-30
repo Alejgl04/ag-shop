@@ -35,22 +35,23 @@ export class ProductsService {
       });
       await this.productRepository.save(product);
 
-      return {
-        ...product,
-        images,
-      };
+      return { ...product, images };
     } catch (error) {
       this.handleExceptions(error);
     }
   }
 
-  findAll(paginationDto: PaginationDto) {
+  async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
 
-    return this.productRepository.find({
+    const products = await this.productRepository.find({
       take: limit,
       skip: offset,
     });
+    return products.map(({ images, ...productData }) => ({
+      ...productData,
+      images: images.map((img) => img.url),
+    }));
   }
 
   async findOne(term: string) {
@@ -59,17 +60,26 @@ export class ProductsService {
     if (isUUID(term)) {
       product = await this.productRepository.findOneBy({ id: term });
     } else {
-      const queryBuilder = this.productRepository.createQueryBuilder();
+      const queryBuilder = this.productRepository.createQueryBuilder('prod');
       product = await queryBuilder
         .where('UPPER(title)=:title or slug=:slug', {
           title: term.toUpperCase(),
           slug: term.toLowerCase(),
         })
+        .leftJoinAndSelect('prod.images', 'prodImages')
         .getOne();
     }
 
     if (!product) this.handleNotFoundException(term);
     return product;
+  }
+
+  async findOneImagePlain(term: string) {
+    const { images = [], ...productData } = await this.findOne(term);
+    return {
+      ...productData,
+      images: images.map((image) => image.url),
+    };
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
