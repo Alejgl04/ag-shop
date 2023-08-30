@@ -11,4 +11,7 @@
 5. Execute database
 ```docker-compose up -d```
 
-6. run ```npm run start:dev```
+6. Execute seed
+```http://localhost:3000/api/seed```
+
+7. run ```npm run start:dev```
