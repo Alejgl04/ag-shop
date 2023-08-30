@@ -95,7 +95,7 @@ export class ProductsService {
     return this.updateQueryRunner(id, images, product);
   }
 
-  async updateQueryRunner(id, images: string[], product: Product) {
+  async updateQueryRunner(id: string, images: string[], product: Product) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
