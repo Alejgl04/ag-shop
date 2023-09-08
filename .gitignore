@@ -3,7 +3,8 @@
 /node_modules
 postgres/
 .env
-
+static/products/**
+static/uploads/**
 # Logs
 logs
 *.log
