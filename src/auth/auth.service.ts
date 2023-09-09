@@ -37,9 +37,7 @@ export class AuthService {
 
   async signIn(signInUserDto: SignInUserDto) {
     const { email, password } = signInUserDto;
-
     const user = await this.checkUser(email, password);
-
     return user;
   }
 
