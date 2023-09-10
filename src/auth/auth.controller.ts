@@ -5,6 +5,9 @@ import { AuthService } from './auth.service';
 import { CreateUserDto, SignInUserDto } from './dto';
 import { GetUser, RawHeaders } from './decorators/';
 import { User } from './entities/user.entity';
+import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { RoleProtected } from './decorators/role-protected.decorator';
+import { ValidRoles } from './interfaces';
 
 @Controller('auth')
 export class AuthController {
@@ -29,10 +32,21 @@ export class AuthController {
   ) {
     return {
       ok: true,
-      message: 'hola',
+      message: 'custom response',
       user,
       userEmail,
       rawHeaders,
+    };
+  }
+  // @SetMetadata('roles', ['admin', 'superuser'])
+
+  @Get('private2')
+  @RoleProtected(ValidRoles.superuser, ValidRoles.admin)
+  @UseGuards(AuthGuard(), UserRoleGuard)
+  privateRoute2(@GetUser() user: User) {
+    return {
+      ok: true,
+      user,
     };
   }
 }
