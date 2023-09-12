@@ -12,6 +12,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Product, ProductImage } from './entities';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { validate as isUUID } from 'uuid';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -27,11 +28,12 @@ export class ProductsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
       const { images = [], ...productData } = createProductDto;
       const product = this.productRepository.create({
         ...productData,
+        user,
         images: images.map((image) =>
           this.productImageRepository.create({ url: image }),
         ),
@@ -85,17 +87,22 @@ export class ProductsService {
     };
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, user: User) {
     const { images, ...toUpdate } = updateProductDto;
     const product = await this.productRepository.preload({ id, ...toUpdate });
 
     if (!product) this.handleNotFoundException(id);
 
     // CREATE QUERY RUNNER
-    return this.updateQueryRunner(id, images, product);
+    return this.updateQueryRunner(id, images, product, user);
   }
 
-  async updateQueryRunner(id: string, images: string[], product: Product) {
+  async updateQueryRunner(
+    id: string,
+    images: string[],
+    product: Product,
+    user,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -107,6 +114,7 @@ export class ProductsService {
           this.productImageRepository.create({ url: image }),
         );
       }
+      product.user = user;
       await queryRunner.manager.save(product);
       await queryRunner.commitTransaction();
       await queryRunner.release();
